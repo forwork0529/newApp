@@ -1,0 +1,4 @@
+INFO: 2023/03/12 10:24:39 func Update saved: 20 articles from source: 0
+INFO: 2023/03/12 10:24:39 func Update saved: 20 articles from source: 1
+INFO: 2023/03/12 10:24:40 func Update saved: 4 articles from source: 2
+INFO: 2023/03/12 10:24:40 func flush push to output [source number : articles quantity, ..]: map[0:20 1:20 2:4]
