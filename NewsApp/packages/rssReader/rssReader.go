@@ -12,6 +12,7 @@ import (
 
 type reader struct{
 	l *log.Logger
+	pulse int
 	t *time.Ticker
 	sources []string
 	muData sync.Mutex
@@ -25,7 +26,7 @@ type reader struct{
 func New(config proxyStructs.AppConfig, logger *log.Logger) *reader {
 	return &reader{
 		l : logger,
-		t : time.NewTicker(time.Duration(config.ReqPer) * time.Second),
+		pulse : config.ReqPer,
 		sources : config.Sources,
 		muData : sync.Mutex{},
 		data : make([]proxyStructs.Feed, len(config.Sources)),
@@ -36,9 +37,10 @@ func New(config proxyStructs.AppConfig, logger *log.Logger) *reader {
 }
 
 func (r *reader) Start(){
+	t := time.NewTicker(time.Duration(r.pulse) * time.Second)
 	go func(){
 		for {
-			<- r.t.C
+			<- t.C
 			r.update(getData)
 			r.flush()
 		}

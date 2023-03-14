@@ -33,4 +33,6 @@ func init(){
 	if err != nil{
 		log.Fatalf("cant read config.txt: %v\n", err)
 	}
+
+
 }
