@@ -1,9 +1,9 @@
-DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS articles;
 
-CREATE TABLE posts (
+CREATE TABLE articles (
 id SERIAL PRIMARY KEY,
-title TEXT NOT NULL,
+title TEXT NOT NULL UNIQUE,
 content TEXT NOT NULL,
 published_at BIGINT NOT NULL,
 link TEXT NOT NULL
-)
+);

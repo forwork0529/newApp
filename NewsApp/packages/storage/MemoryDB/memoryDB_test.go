@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func Test_memoryDB_Start(t *testing.T) {
+func Test_postgresDB(t *testing.T) {
 
 	chFromNet := make(chan proxyStructs.Article, 30)
 	config := proxyStructs.AppConfig{

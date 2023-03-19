@@ -10,51 +10,111 @@ import (
 
 type postgresDB struct{
 	ch <- chan proxyStructs.Article
-	pulse int
 	db *pgxpool.Pool
 	l *log.Logger
+	err error
+	pulse int
 }
 
 
 func New(ch  <- chan proxyStructs.Article, config proxyStructs.AppConfig, logs *log.Logger)(*postgresDB, error){
 
+
 	conPool, err :=  pgxpool.Connect(context.Background(), config.ConnString)
+	if err != nil{
+		return nil, err
+	}
+	err = conPool.Ping(context.Background())
 	if err != nil{
 		return nil, err
 	}
 	logs.Println("connected to postgresql..")
 	return &postgresDB{
 		ch : ch,
-		pulse : config.ReqPer,
 		db : conPool,
 		l : logs,
+		pulse : config.ReqPer,
 	}, nil
 }
 
-func (p *postgresDB) Push(){
-	var c int
-	for{
-		select{
-		case <- p.ch: c += 1
-			continue
-		case <- time.After(time.Second * 3):
-			p.l.Printf("already read from chan %v articles", c)
-			return
+
+func (p *postgresDB) Get(number int)([]proxyStructs.Article, error){
+	var res = make([]proxyStructs.Article, 0)
+	rows, err := p.db.Query(context.Background(),`SELECT title, content, published_at, link FROM articles ORDER BY published_at DESC LIMIT $1`, number)
+	if err != nil {
+		return []proxyStructs.Article{}, err
+	}
+	defer rows.Close()
+	for rows.Next(){
+		var article proxyStructs.Article
+		err = rows.Scan(&article.Title, &article.Description, &article.PubDate, &article.Link)
+		if err != nil{
+			return []proxyStructs.Article{}, err
 		}
+		res = append(res, article)
+	}
+	if rows.Err() != nil{
+		return []proxyStructs.Article{}, err
+	}
+	return res, nil
+}
+
+
+
+func (p * postgresDB) Push(art proxyStructs.Article){
+
+	_, err := p.db.Exec(context.Background(), `INSERT INTO articles (title, content, published_at, link)
+	VALUES ($1, $2, $3, $4) returning id;`, art.Title, art.Description, art.PubDate, art.Link)
+/*	var id int
+	err := p.db.QueryRow(context.Background(),`INSERT INTO articles (title, content, published_at, link)
+	VALUES ($1, $2, $3, $4) returning id;`, art.Title, art.Description, art.PubDate, art.Link).Scan(&id)*/
+	if err != nil{
+		if err.Error() == "ERROR: duplicate key value violates unique constraint \"articles_title_key\" (SQLSTATE 23505)"{
+
+		} else{
+			p.updtErr(err)
+		}
+
 	}
 }
 
-func (p *postgresDB) Get(number int)([]proxyStructs.Article, error){
-	return []proxyStructs.Article{}, nil
+func (p *postgresDB) Flush(){
+	_, err := p.db.Exec(context.Background(), `truncate articles;`)
+	if err != nil{
+		p.l.Printf("error via truncating table: %v\n", err.Error())
+	}
 }
 
 
-func (p *postgresDB)Start(){
-	t := time.NewTicker(time.Duration(p.pulse))
+func (p *postgresDB)Start(){ // Старт обеспечивает регулярные: чтение из канала ,  запись ошибок в логи и промывку
 	go func(){
 		for{
-			<- t.C
-			p.Push()
+			article := <- p.ch
+			p.Push(article)
+
 		}
 	}()
+	go func(){
+		t := time.NewTicker(time.Duration(p.pulse) * time.Second)
+		for{
+			<- t.C
+			if p.err != nil{
+				p.l.Printf("one of the storage errors: %v", p.err.Error())
+			}
+		}
+	}()
+	go func(){
+
+		for{
+			<- time.After(time.Duration(p.pulse) * time.Second * 10)
+			p.Flush()
+		}
+	}()
+}
+
+
+func (p * postgresDB) updtErr(err error){
+	if p.err == nil{
+		p.err = err
+	}
 }

@@ -4,34 +4,23 @@ import (
 	"errors"
 	"log"
 	"newsApp/packages/proxyStructs"
-	"time"
 )
 
 type memoryDB struct{
 	ch <- chan  proxyStructs.Article
-	pulse int
 	l *log.Logger
 }
 
 func New(ch <- chan proxyStructs.Article, config proxyStructs.AppConfig, logs *log.Logger)*memoryDB{
+	logs.Println("using memoryDB...")
 	return &memoryDB{
 		ch : ch,
-		pulse : config.ReqPer,
 		l : logs,
 	}
 }
 
-func (m *memoryDB) Push(){
-	var c int
-	for{
-		select{
-		case <- m.ch: c += 1
-		continue
-		case <- time.After(time.Second * 3):
-			m.l.Printf("already read from chan %v articles", c)
-			return
-		}
-	}
+func (m *memoryDB) Push(art proxyStructs.Article){
+
 }
 
 func (m *memoryDB) Get(number int)([]proxyStructs.Article, error){
@@ -45,21 +34,25 @@ func (m *memoryDB) Get(number int)([]proxyStructs.Article, error){
 	return res, nil
 }
 
+func (m *memoryDB) Flush(){
 
-var attendantArt  = proxyStructs.Article{
-	Title: "Attendant article",
-	Description: "Some description it the body of article",
-	PubDate: "Fri, 10 Mar 2023 00:00:00 +0000",
-	Link : "https://golangweekly.com/issues/451",
 }
 
+
+
 func (m *memoryDB)Start(){
-	t := time.NewTicker(time.Duration(m.pulse))
 	go func(){
 		for{
-			<- t.C
-			m.Push()
+			article := <- m.ch
+			m.Push(article)
 		}
 	}()
 }
 
+
+var attendantArt  = proxyStructs.Article{
+	Title: "Attendant article",
+	Description: "Some description it the body of article",
+	PubDate: 123456,
+	Link : "https://golangweekly.com/issues/451",
+}
