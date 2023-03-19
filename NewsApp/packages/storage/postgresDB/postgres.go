@@ -95,7 +95,7 @@ func (p *postgresDB)Start(){ // Старт обеспечивает регуля
 		}
 	}()
 	go func(){
-		t := time.NewTicker(time.Duration(p.pulse) * time.Second)
+		t := time.NewTicker(time.Duration(p.pulse) * time.Minute)
 		for{
 			<- t.C
 			if p.err != nil{
@@ -106,7 +106,7 @@ func (p *postgresDB)Start(){ // Старт обеспечивает регуля
 	go func(){
 
 		for{
-			<- time.After(time.Duration(p.pulse) * time.Second * 10)
+			<- time.After(time.Duration(p.pulse) * time.Minute * 10)
 			p.Flush()
 		}
 	}()
