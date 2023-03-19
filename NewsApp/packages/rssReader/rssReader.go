@@ -13,7 +13,6 @@ import (
 type reader struct{
 	l *log.Logger
 	pulse int
-	t *time.Ticker
 	sources []string
 	muData sync.Mutex
 	data []proxyStructs.Feed
@@ -23,6 +22,7 @@ type reader struct{
 	ch chan proxyStructs.Article
 }
 
+// Создание структуры опрашивающей RSS ленты и пишущей результаты в  общий канал (требуется запуск)
 func New(config proxyStructs.AppConfig, logger *log.Logger) *reader {
 	return &reader{
 		l : logger,
@@ -36,8 +36,10 @@ func New(config proxyStructs.AppConfig, logger *log.Logger) *reader {
 	}
 }
 
+// В соответсвии с периодичностью опрсоса определённой в структуре конфигурации
+// RSS reader запускает цикл сбора данных и записи в выходной поток
 func (r *reader) Start(){
-	t := time.NewTicker(time.Duration(r.pulse) * time.Second)
+	t := time.NewTicker(time.Duration(r.pulse) * time.Minute)
 	go func(){
 		for {
 			<- t.C
@@ -78,7 +80,7 @@ func (r *reader) update(gD func(string)([]byte, error)){ // обновляет �
 			}
 			r.muData.Lock()
 			r.data[n] = feed
-			r.l.Printf("func update saved: %v articles from source: %v\n", len(feed.Chanel.List), n)
+			// r.l.Printf("func update saved: %v articles from source: %v\n", len(feed.Chanel.List), n)
 			r.muData.Unlock()
 			
 		}(n, url, r, &wg)
@@ -99,7 +101,7 @@ func (r *reader) flush(){
 		}
 
 	}
-	r.l.Printf("func flush push to output [source number : articles quantity, ..]: %v\n", archive)
+	// r.l.Printf("func flush push to output [source number : articles quantity, ..]: %v\n", archive)
 	r.data = make([]proxyStructs.Feed, len(r.sources))
 }
 

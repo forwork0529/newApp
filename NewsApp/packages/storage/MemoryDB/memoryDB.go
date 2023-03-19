@@ -51,6 +51,7 @@ func (m *memoryDB)Start(){
 
 
 var attendantArt  = proxyStructs.Article{
+	ID: 123,
 	Title: "Attendant article",
 	Description: "Some description it the body of article",
 	PubDate: 123456,

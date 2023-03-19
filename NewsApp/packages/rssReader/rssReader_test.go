@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func GetDataTest(url string)([]byte, error){
+func getDataTest(url string)([]byte, error){
 	return []byte(Data1), nil
 }
 
@@ -42,7 +42,7 @@ func Test_RssReader(t *testing.T) {
 	r := New(config, log.Default())
 	r.l.Println("reader created")
 	t.Run("update testing", func (t *testing.T){
-		r.update(GetDataTest)
+		r.update(getDataTest)
 		if err := r.Err(); err != nil{
 			t.Fatalf("error via updating: %v", r.Err().Error())
 		}

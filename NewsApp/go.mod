@@ -2,7 +2,10 @@ module newsApp
 
 go 1.19
 
-require github.com/jackc/pgx/v4 v4.18.1
+require (
+	github.com/gorilla/mux v1.8.0
+	github.com/jackc/pgx/v4 v4.18.1
+)
 
 require (
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
