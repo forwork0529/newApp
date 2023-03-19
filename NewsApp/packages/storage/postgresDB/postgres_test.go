@@ -61,7 +61,7 @@ func TestNew(t *testing.T) {
 			d += 1
 		}
 		if (d - 2) != c{
-			t.Fatal("no new data after push (test can fail when the article with test title exists, sometimes need retry)")
+			t.Fatal("no new data after Push (test can fail when the article with test title exists, sometimes need retry)")
 		}
 
 	})
@@ -120,7 +120,7 @@ func TestNew(t *testing.T) {
 			c += 1
 		}
 		if c > 0{
-			t.Fatal("flush func doesnt work")
+			t.Fatal("Flush func doesnt work")
 		}
 	})
 

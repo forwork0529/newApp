@@ -16,6 +16,9 @@ type postgresDB struct{
 	pulse int
 }
 
+// Создание структуры предназначенной для: регулярного получения , сохранения
+// удаления и выдачи публикаций из БД. Выдача осуществляется методом Get,
+// регулярность опредеяется полем струектуры конфигурации (требуется запуск).
 
 func New(ch  <- chan proxyStructs.Article, config proxyStructs.AppConfig, logs *log.Logger)(*postgresDB, error){
 
@@ -37,7 +40,7 @@ func New(ch  <- chan proxyStructs.Article, config proxyStructs.AppConfig, logs *
 	}, nil
 }
 
-
+// получение данных из структуры взаимодействующей с БД.
 func (p *postgresDB) Get(number int)([]proxyStructs.Article, error){
 	var res = make([]proxyStructs.Article, 0)
 	rows, err := p.db.Query(context.Background(),`SELECT title, content, published_at, link FROM articles ORDER BY published_at DESC LIMIT $1`, number)
@@ -60,7 +63,8 @@ func (p *postgresDB) Get(number int)([]proxyStructs.Article, error){
 }
 
 
-
+// Добавление публикации в БД, если публикация с таким названием уже
+// имеется в БД никаких действий не происходит
 func (p * postgresDB) Push(art proxyStructs.Article){
 
 	_, err := p.db.Exec(context.Background(), `INSERT INTO articles (title, content, published_at, link)
@@ -78,6 +82,7 @@ func (p * postgresDB) Push(art proxyStructs.Article){
 	}
 }
 
+// Полная очистка таблицы базы данных
 func (p *postgresDB) Flush(){
 	_, err := p.db.Exec(context.Background(), `truncate articles;`)
 	if err != nil{
@@ -85,8 +90,9 @@ func (p *postgresDB) Flush(){
 	}
 }
 
-
-func (p *postgresDB)Start(){ // Старт обеспечивает регулярные: чтение из канала ,  запись ошибок в логи и промывку
+// Start (запуск) запускает циклическое чтение, логирование ошибок и удаление данных из
+// структуры работающей с БД. Регулярность определяется полем конфигурационной структуры при создании
+func (p *postgresDB)Start(){
 	go func(){
 		for{
 			article := <- p.ch
